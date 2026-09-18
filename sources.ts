@@ -1,9 +1,6 @@
 import { defineSource } from '@jaspers-ai/sdk'
 import { z } from 'zod'
 
-// The published SDK types a source's arguments as unknown, since from there it cannot see the
-// schema beside them. Each run names what its own input parses to.
-type Args = Record<string, any>
 
 // The Federal Reserve Board's own data download, which answers CSV without a key. FRED is the
 // friendlier way to the same numbers and wants a free key; this does not, so the yield curve is
@@ -39,8 +36,7 @@ export const yields = defineSource({
     'The US Treasury yield curve, daily, from the Fed\'s own H.15 release: the constant maturity yield at each tenor from one month to thirty years. One row per day, one column per tenor, so a row is a curve and a column is a series.',
   hosts: [HOST],
   input: z.object({ days: z.number().int().min(1).max(5000).default(90).describe('Trading days to read, newest last.') }),
-  async run(raw, ctx) {
-    const { days } = raw as Args
+  async run({ days }, ctx) {
     const url = `https://${HOST}/datadownload/Output.aspx?rel=H15&series=${H15}&lastobs=${days}&filetype=csv&label=include&layout=seriescolumn`
     const response = await ctx.fetch(url, { headers: { 'User-Agent': 'Jaspers Terminal (https://jsprai.com)' } })
     if (!response.ok) throw new Error(`The Federal Reserve answered ${response.status}.`)
